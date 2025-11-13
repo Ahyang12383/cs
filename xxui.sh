@@ -29,9 +29,6 @@ install_xui() {
     # 下载解压
     echo "📥 下载 XUI 最新稳定版..."
     wget -qO /tmp/xui.zip https://github.com/vaxilu/xui/releases/latest/download/xui-linux-amd64.zip
-    mkdir -p /usr/local/xui
-    unzip -o /tmp/xui.zip -d /usr/local/xui
-    chmod +x /usr/local/xui/xui
 
     # 初始化账号密码
     echo "🔑 配置账号密码..."
