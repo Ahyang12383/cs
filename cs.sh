@@ -1,77 +1,75 @@
 #!/bin/bash
-设置 -欧欧管道故障
+set -euo pipefail
+# XUI 面板一键安装脚本（Ubuntu/Debian/CentOS通用）
+# 仓库地址：https://github.com/Ahyang12383/cs
+# 一键执行：curl -fsSL https://raw.githubusercontent.com/Ahyang12383/cs/refs/heads/main/cs.sh | bash
 
-# 检查根权限
-如果 [ "$(id -u)" -东北 0 ]; 然后
-回声-e “033[31m❌请使用根用户运行(须藤一切换)033[0m "
-    出口 1
-船方不负担装货费用
+# 1. 权限校验
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "\033[31m❌ 请使用 root 用户运行（sudo -i 切换）\033[0m"
+    exit 1
+fi
 
-# 定义安装路径和端口
-XUI方向="/etc/x-ui "
-XUI港="54321"  # 默认面板端口，可修改
+# 2. 定义参数（可修改）
+XUI_PORT="54321"  # 面板默认端口
+XUI_USER="admin"  # 默认用户名
+XUI_DIR="/etc/x-ui"
 
-# 安装依赖
-回声-e " 033[34m🔧 正在安装依赖包...033[0m "
-如果 [ -f/etc/debian _ version]；然后
-apt更新表示“有…的”& apt安装表示“有…的”curl wget unzip tar openssl
- 否则如果 [ -f/etc/red hat-release]；然后
-yum更新表示“有…的”&& yum安装表示“有…的”curl wget unzip tar openssl
-其他
-回声-e “033[31m❌不支持当前系统,仅支持Ubuntu/Debian/CentOS 033[0m "
-    出口 1
-船方不负担装货费用
+# 3. 安装依赖
+echo -e "\033[34m🔧 安装基础依赖...\033[0m"
+if [ -f /etc/debian_version ]; then
+    apt update -y > /dev/null 2>&1 && apt install -y curl wget unzip tar openssl > /dev/null 2>&1
+elif [ -f /etc/redhat-release ]; then
+    yum update -y > /dev/null 2>&1 && yum install -y curl wget unzip tar openssl > /dev/null 2>&1
+else
+    echo -e "\033[31m❌ 不支持当前系统，仅兼容 Ubuntu/Debian/CentOS\033[0m"
+    exit 1
+fi
 
-# 下载XUI最新版本（官方源)
-回声-e " 033[34m📥 正在下载XUI面板...033[0m "
-wget-qOxui . zip https://github . com/vaxilu/x-ui/releases/latest/download/x-ui-Linux-amd64 . zip
+# 4. 下载 XUI 最新版
+echo -e "\033[34m📥 下载 XUI 面板（官方最新版）...\033[0m"
+wget -qO xui.zip https://github.com/vaxilu/x-ui/releases/latest/download/x-ui-linux-amd64.zip
 
-# 解压安装
-拉开…的拉链问xui.zip-d $XUI方向
-chmod +x$XUI方向/x-ui-linux-amd64
+# 5. 解压安装
+rm -rf $XUI_DIR && mkdir -p $XUI_DIR
+unzip -q xui.zip -d $XUI_DIR
+chmod +x $XUI_DIR/x-ui-linux-amd64
+rm -rf xui.zip
 
-# 创建系统服务（开机自启）
-cat >/etc/systemd/system/x-ui . service< < EOF
-[单位]
-描述=XUI面板(基于x光)
+# 6. 创建系统服务（开机自启）
+cat > /etc/systemd/system/x-ui.service << EOF
+[Unit]
+Description=XUI Panel (Based on Xray)
 After=network.target
 
-[服务]
-类型=简单
-工作目录=$XUI目录
-ExecStart=$XUI目录/x-ui-linux-amd64
-重启=开-失败
+[Service]
+Type=simple
+WorkingDirectory=$XUI_DIR
+ExecStart=$XUI_DIR/x-ui-linux-amd64 -port $XUI_PORT
+Restart=on-failure
 RestartSec=5s
 
-[安装]
-WantedBy =多用户.目标
-文件结束
+[Install]
+WantedBy=multi-user.target
+EOF
 
-# 启动服务并设置开机自启
-systemctl守护程序-重新加载
-systemctl启用x-ui-现在
+# 7. 启动服务
+systemctl daemon-reload > /dev/null 2>&1
+systemctl enable --now x-ui > /dev/null 2>&1
 
-# 检查运行状态
-如果系统控制处于激活状态安静x-ui；然后
-    # 生成随机登录密码
-    随机通过=$(openssl rand -hex 8)
-    $XUI方向/x-ui-linux-amd64 setting -用户名管理-密码 $随机通行证
+# 8. 生成随机密码
+RANDOM_PASS=$(openssl rand -hex 8)
+$XUI_DIR/x-ui-linux-amd64 setting -username $XUI_USER -password $RANDOM_PASS
 
-回声-e " n 033[32m🎉XUI面板安装成功！033[0m "
-回声-e “033[33米📋 登录信息:033[0米]
-回声-e "面板地址:http://$(科尔-icanhazip.com):$XUI港"
-回声-e "用户名:管理"
-回声-e "  密码：$随机通行证"
-回声-e " n 033[34m💡 常用命令:033[0米]
-回声-e "启动:systemctl start x-ui "
-回声-e "停止:systemctl停止x-ui "
-回声-e "重启:systemctl重新启动x-ui "
-回声-e "查看日志:journalctl -u x-ui -f "
-其他
-回声-e “033[31m❌·许启动失败,请查看日志:journalctl -u x-ui 033[0m "
-    出口 1
-船方不负担装货费用
-
-# 清理安装文件
-空间-射频xui.zip
-回声-e “033[32m✅北部安装完成,快去登录面板配置节点吧！033[0m "
+# 9. 输出登录信息
+SERVER_IP=$(curl -sL ip.sb)
+echo -e "\n\033[32m🎉 XUI 面板安装成功！\033[0m"
+echo -e "\033[33m📋 登录信息：\033[0m"
+echo -e "  面板地址：http://${SERVER_IP}:${XUI_PORT}"
+echo -e "  用户名：${XUI_USER}"
+echo -e "  密码：${RANDOM_PASS}"
+echo -e "\033[33m💡 常用命令：\033[0m"
+echo -e "  重启面板：systemctl restart x-ui"
+echo -e "  查看日志：journalctl -u x-ui -f"
+echo -e "  修改密码：${XUI_DIR}/x-ui-linux-amd64 setting -password 新密码"
+echo -e "\033[33m⚠️  请开放服务器安全组 ${XUI_PORT} 端口\033[0m"
