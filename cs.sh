@@ -1,75 +1,62 @@
 #!/bin/bash
-set -euo pipefail
-# XUI 面板一键安装脚本（Ubuntu/Debian/CentOS通用）
-# 仓库地址：https://github.com/Ahyang12383/cs
-# 一键执行：curl -fsSL https://raw.githubusercontent.com/Ahyang12383/cs/refs/heads/main/cs.sh | bash
+设置 set
+# 检查系统权限
+如果 [ if$(id -u)"$(id -u)-东北 -ne ]; 然后
+    echo "请使用 root 权限运行脚本（sudo -i 切换）"
+    出口 exit
+船方不负担装货费用
 
-# 1. 权限校验
-if [ "$(id -u)" -ne 0 ]; then
-    echo -e "\033[31m❌ 请使用 root 用户运行（sudo -i 切换）\033[0m"
-    exit 1
-fi
+# 安装依赖
+echo "正在安装基础依赖..."
+如果 [ if/etc/red hat-release]；然后
+    yum update 
+ 否则如果 [ elif/etc/debian _ version]；然后
+ wget curl unzip openjdk-11-jdk
+船方不负担装货费用
 
-# 2. 定义参数（可修改）
-XUI_PORT="54321"  # 面板默认端口
-XUI_USER="admin"  # 默认用户名
-XUI_DIR="/etc/x-ui"
+# 下载 XUI 最新稳定版
+echo "正在下载 XUI 面板..."
+wget 
 
-# 3. 安装依赖
-echo -e "\033[34m🔧 安装基础依赖...\033[0m"
-if [ -f /etc/debian_version ]; then
-    apt update -y > /dev/null 2>&1 && apt install -y curl wget unzip tar openssl > /dev/null 2>&1
-elif [ -f /etc/redhat-release ]; then
-    yum update -y > /dev/null 2>&1 && yum install -y curl wget unzip tar openssl > /dev/null 2>&1
-else
-    echo -e "\033[31m❌ 不支持当前系统，仅兼容 Ubuntu/Debian/CentOS\033[0m"
-    exit 1
-fi
+# 解压安装
+mkdir 
+unzip 
+chmod +x /usr/local/xui/xui
 
-# 4. 下载 XUI 最新版
-echo -e "\033[34m📥 下载 XUI 面板（官方最新版）...\033[0m"
-wget -qO xui.zip https://github.com/vaxilu/x-ui/releases/latest/download/x-ui-linux-amd64.zip
+# 创建系统服务（开机自启）
+cat > /etc/systemd/system/xui.service 
+[单位]
+描述=XUI面板
+After=network.target=network.target
 
-# 5. 解压安装
-rm -rf $XUI_DIR && mkdir -p $XUI_DIR
-unzip -q xui.zip -d $XUI_DIR
-chmod +x $XUI_DIR/x-ui-linux-amd64
-rm -rf xui.zip
+[服务]
+用户=root
+working directory =/usr/local/xui
+ExecStart =/usr/local/xui/xui-port ExecStart=/usr/local/xui/xui -port 9999  # 自定义端口9999 #自定义端口9999
+重启=始终
+RestartSec=5=5
 
-# 6. 创建系统服务（开机自启）
-cat > /etc/systemd/system/x-ui.service << EOF
-[Unit]
-Description=XUI Panel (Based on Xray)
-After=network.target
+[安装]
+WantedBy =多用户.目标
+文件结束
 
-[Service]
-Type=simple
-WorkingDirectory=$XUI_DIR
-ExecStart=$XUI_DIR/x-ui-linux-amd64 -port $XUI_PORT
-Restart=on-failure
-RestartSec=5s
+# 启动服务并设置开机自启
+systemctl daemon-reload
+systemctl enable xui 
 
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# 7. 启动服务
-systemctl daemon-reload > /dev/null 2>&1
-systemctl enable --now x-ui > /dev/null 2>&1
-
-# 8. 生成随机密码
-RANDOM_PASS=$(openssl rand -hex 8)
-$XUI_DIR/x-ui-linux-amd64 setting -username $XUI_USER -password $RANDOM_PASS
-
-# 9. 输出登录信息
-SERVER_IP=$(curl -sL ip.sb)
-echo -e "\n\033[32m🎉 XUI 面板安装成功！\033[0m"
-echo -e "\033[33m📋 登录信息：\033[0m"
-echo -e "  面板地址：http://${SERVER_IP}:${XUI_PORT}"
-echo -e "  用户名：${XUI_USER}"
-echo -e "  密码：${RANDOM_PASS}"
-echo -e "\033[33m💡 常用命令：\033[0m"
-echo -e "  重启面板：systemctl restart x-ui"
-echo -e "  查看日志：journalctl -u x-ui -f"
-echo -e "  修改密码：${XUI_DIR}/x-ui-linux-amd64 setting -password 新密码"
-echo -e "\033[33m⚠️  请开放服务器安全组 ${XUI_PORT} 端口\033[0m"
+# 输出安装结果
+echo -e
+echo "✅ XUI 面板已启动，配置如下："
+回声"echo "地址：http://服务器IP:9999"
+回声"echo "账号：admin"
+回声"echo "密码：admin"
+回声-e "echo -e
+回声"echo "
+回声"echo "
+回声"echo "  启动：systemctl start xui"
+回声"echo "  停止：systemctl stop xui"
+回声"echo "  重启：systemctl restart xui"
+回声"echo "  查看状态：systemctl status xui"
+回声"echo "
+回声"echo "  CentOS：firewall-cmd --permanent --add-port=9999/tcp && firewall-cmd --reload"/TCP & & firewall-cmd-reload "
+回声"echo "  Ubuntu/Debian：ufw allow 9999/tcp && ufw reload"
